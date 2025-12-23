@@ -17,6 +17,16 @@ const App = () => {
   // 使用 useRef 來記錄是否剛完成選取動作，避免重複觸發下拉選單
   const isSelectionMade = useRef(false);
 
+  // 模擬公司資料庫 (包含名稱與產業)
+  const companyDb = [
+    { name: "寶雅", industry: "百貨零售業" },
+    { name: "寶島眼鏡", industry: "醫療器材零售業" },
+    { name: "寶成工業", industry: "鞋業製造業" },
+    { name: "寶齡爵諾", industry: "生技製藥業" },
+    { name: "寶元實業", industry: "土地開發與建築業" },
+    { name: "仁寶電腦", industry: "電腦及週邊設備業" }
+  ];
+
   // 模擬搜尋建議功能
   useEffect(() => {
     // 如果剛選取完，則不執行搜尋建議
@@ -27,12 +37,13 @@ const App = () => {
 
     const timer = setTimeout(() => {
       if (companyName.length >= 1 && step === 'input') {
-        const mockSuggestions = ["寶雅", "寶島眼鏡", "寶成工業", "寶齡爵諾", "寶元實業", "仁寶電腦"].filter(s => s.includes(companyName));
+        const filtered = companyDb.filter(item => item.name.includes(companyName));
+        
         // 如果輸入的內容完全等於其中一個選項，且目前沒顯示選單，就不再顯示（代表已選取）
-        if (mockSuggestions.length === 1 && mockSuggestions[0] === companyName) {
+        if (filtered.length === 1 && filtered[0].name === companyName) {
             setSuggestions([]);
         } else {
-            setSuggestions(mockSuggestions);
+            setSuggestions(filtered);
         }
       } else {
         setSuggestions([]);
@@ -41,9 +52,10 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [companyName, step]);
 
-  const selectCompany = (name) => {
+  const selectCompany = (item) => {
     isSelectionMade.current = true;
-    setCompanyName(name);
+    setCompanyName(item.name);
+    setIndustry(item.industry); // 自動帶入產業資訊
     setSuggestions([]);
     setSelectedIndex(-1);
   };
@@ -112,7 +124,10 @@ const App = () => {
                           onClick={() => selectCompany(item)}
                           className={`px-6 py-4 cursor-pointer transition-colors ${selectedIndex === idx ? 'bg-blue-600 text-white' : 'hover:bg-slate-700 text-slate-300'}`}
                         >
-                          {item}
+                          <div className="flex justify-between items-center">
+                            <span>{item.name}</span>
+                            <span className="text-[10px] bg-slate-700 px-2 py-1 rounded text-slate-400 font-bold">{item.industry}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
