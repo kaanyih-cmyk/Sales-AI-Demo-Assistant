@@ -1,27 +1,10 @@
-"use client"; // 這是 Next.js 部署成功的關鍵，必須放在第一行
-
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Search, 
-  ChevronRight, 
-  BarChart3, 
-  AlertCircle, 
-  CheckCircle2, 
-  Send, 
-  Loader2, 
-  Building2, 
-  Factory 
-} from 'lucide-react';
+import { Search, ChevronRight, BarChart3, AlertCircle, CheckCircle2, Send, Loader2, Building2, Factory } from 'lucide-react';
 
-/**
- * SalesAI Demo 完整修正版
- * 1. 修正 Vercel 部署所需的 "use client" 指令
- * 2. 修正下拉選單選取後不自動關閉的問題
- * 3. 修正選取公司後產業領域未連動的問題
- * 4. 優化 Next.js 環境相容性
- */
+// --- 這裡是主要的 Demo 網頁程式碼 ---
+const apiKey = ""; 
 
-export default function App() {
+const App = () => {
   const [step, setStep] = useState('input'); 
   const [companyName, setCompanyName] = useState('');
   const [industry, setIndustry] = useState('');
@@ -31,10 +14,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState(null);
   
-  // 記錄選取狀態，防止選單重複彈出
+  // 使用 useRef 來記錄是否剛完成選取動作，避免重複觸發下拉選單
   const isSelectionMade = useRef(false);
 
-  // 模擬公司與產業對應資料庫
+  // 模擬公司資料庫 (包含名稱與產業)
   const companyDb = [
     { name: "寶雅", industry: "百貨零售業" },
     { name: "寶島眼鏡", industry: "醫療器材零售業" },
@@ -44,8 +27,9 @@ export default function App() {
     { name: "仁寶電腦", industry: "電腦及週邊設備業" }
   ];
 
-  // 搜尋建議邏輯
+  // 模擬搜尋建議功能
   useEffect(() => {
+    // 如果剛選取完，則不執行搜尋建議
     if (isSelectionMade.current) {
       isSelectionMade.current = false;
       return;
@@ -55,7 +39,7 @@ export default function App() {
       if (companyName.length >= 1 && step === 'input') {
         const filtered = companyDb.filter(item => item.name.includes(companyName));
         
-        // 若輸入內容與建議項完全符合，則隱藏選單
+        // 如果輸入的內容完全等於其中一個選項，且目前沒顯示選單，就不再顯示（代表已選取）
         if (filtered.length === 1 && filtered[0].name === companyName) {
             setSuggestions([]);
         } else {
@@ -68,11 +52,10 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [companyName, step]);
 
-  // 處理選取：同時更新名稱與產業
   const selectCompany = (item) => {
     isSelectionMade.current = true;
     setCompanyName(item.name);
-    setIndustry(item.industry); 
+    setIndustry(item.industry); // 自動帶入產業資訊
     setSuggestions([]);
     setSelectedIndex(-1);
   };
@@ -91,12 +74,11 @@ export default function App() {
   };
 
   const generateReport = () => {
-    if (!companyName) return;
     setLoading(true);
     setTimeout(() => {
       setReportData({
-        trends: "目前的零售與科技產業環境正受到生成式 AI 與大數據的深刻影響。企業積極追求 OMO 虛實整合，利用數據中台進行精準行銷，以因應消費習慣的快速變遷。數位轉型已從「選擇」變為企業生存的「必需品」。",
-        painPoints: "現有的營運流程中，資訊孤島現象嚴重，導致決策時效性不足。客戶資料分散在各個子系統中，無法建立完整的 360 度視圖，進而影響了行銷的投資報酬率 (ROI) 與客戶忠誠度的維護。"
+        trends: "目前零售與科技產業正迎來 AI 驅動的轉型浪潮，企業紛紛投入 OMO (線上線下整合) 以及數據中台的建設。隨著生成式 AI 普及，如何利用數據精準預測消費行為並提供個性化服務，已成為維持競爭力的核心關鍵。",
+        painPoints: "現有系統架構老舊，導致線上與實體店鋪的數據無法即時同步，造成會員體驗斷層。此外，行銷人員缺乏自動化工具來處理巨量數據，導致無法針對不同客群進行精準投遞，進而造成轉換率持續低迷。"
       });
       setStep('report');
       setLoading(false);
@@ -107,16 +89,16 @@ export default function App() {
     <div className="min-h-screen bg-[#0b0f1a] text-slate-200 font-sans p-4 md:p-10 flex justify-center">
       <div className="w-full max-w-3xl">
         
-        {/* Header */}
+        {/* 標題區 */}
         <div className="mb-12 text-center">
           <h1 className="text-5xl font-black tracking-tighter text-white mb-3 italic">
             Sales<span className="text-blue-500">AI</span>
           </h1>
           <div className="h-1 w-20 bg-blue-500 mx-auto mb-4 rounded-full"></div>
-          <p className="text-slate-400 font-medium tracking-wide">SYSTEX 智慧提案 Demo 系統</p>
+          <p className="text-slate-400 font-medium">SYSTEX 智慧提案 Demo 系統</p>
         </div>
 
-        {/* Input Phase */}
+        {/* 第一階段：輸入畫面 */}
         {step === 'input' && (
           <div className="bg-slate-900/40 border border-slate-800/50 rounded-[2.5rem] p-10 shadow-2xl backdrop-blur-xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -127,7 +109,7 @@ export default function App() {
                     type="text"
                     value={companyName}
                     onChange={(e) => {
-                      isSelectionMade.current = false;
+                      isSelectionMade.current = false; // 使用者手動輸入時，重置選取狀態
                       setCompanyName(e.target.value);
                     }}
                     onKeyDown={handleKeyDown}
@@ -143,8 +125,8 @@ export default function App() {
                           className={`px-6 py-4 cursor-pointer transition-colors ${selectedIndex === idx ? 'bg-blue-600 text-white' : 'hover:bg-slate-700 text-slate-300'}`}
                         >
                           <div className="flex justify-between items-center">
-                            <span className="font-medium">{item.name}</span>
-                            <span className="text-[10px] bg-slate-900/50 px-2 py-1 rounded text-slate-400 font-bold border border-slate-700">{item.industry}</span>
+                            <span>{item.name}</span>
+                            <span className="text-[10px] bg-slate-700 px-2 py-1 rounded text-slate-400 font-bold">{item.industry}</span>
                           </div>
                         </div>
                       ))}
@@ -166,14 +148,14 @@ export default function App() {
             </div>
 
             <div className="mb-10">
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">補充資料 (50字以內)</label>
+              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">補充資料 (50字內)</label>
               <textarea
                 value={memo}
                 onChange={(e) => setMemo(e.target.value.slice(0, 50))}
-                placeholder="輸入更多細節輔助分析..."
+                placeholder="輸入更多細節..."
                 className="w-full bg-slate-800/50 border border-slate-700/50 rounded-2xl py-4 px-6 h-32 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none shadow-xl"
               />
-              <div className="text-right text-[10px] font-bold text-slate-600 mt-2 tracking-widest uppercase">{memo.length} / 50</div>
+              <div className="text-right text-[10px] font-bold text-slate-600 mt-2 tracking-widest">{memo.length} / 50</div>
             </div>
 
             <button
@@ -187,49 +169,50 @@ export default function App() {
           </div>
         )}
 
-        {/* Report Phase */}
-        {step === 'report' && reportData && (
+        {/* 第二階段：報告畫面 (比照截圖配色) */}
+        {step === 'report' && (
           <div className="space-y-8 animate-in slide-in-from-bottom-10 duration-700">
             <div className="bg-slate-900/50 rounded-[2rem] border border-slate-800/50 overflow-hidden shadow-2xl">
-              <div className="bg-[#0ea5e9] px-8 py-4 flex items-center gap-3 shadow-lg">
+              <div className="bg-[#0ea5e9] px-8 py-4 flex items-center gap-3">
                 <BarChart3 size={20} className="text-white" />
                 <h2 className="text-lg font-black text-white tracking-wider">產業趨勢</h2>
               </div>
               <div className="p-8">
-                <p className="text-slate-300 leading-relaxed text-lg font-medium">{reportData.trends}</p>
+                <p className="text-slate-300 leading-relaxed text-lg font-medium">
+                  {reportData.trends}
+                </p>
               </div>
             </div>
 
             <div className="bg-slate-900/50 rounded-[2rem] border border-slate-800/50 overflow-hidden shadow-2xl">
-              <div className="bg-[#f59e0b] px-8 py-4 flex items-center gap-3 shadow-lg">
+              <div className="bg-[#f59e0b] px-8 py-4 flex items-center gap-3">
                 <AlertCircle size={20} className="text-white" />
                 <h2 className="text-lg font-black text-white tracking-wider">客戶痛點分析</h2>
               </div>
               <div className="p-8">
-                <p className="text-slate-300 leading-relaxed text-lg font-medium">{reportData.painPoints}</p>
+                <p className="text-slate-300 leading-relaxed text-lg font-medium">
+                  {reportData.painPoints}
+                </p>
               </div>
             </div>
 
             <button
               onClick={() => setStep('solution')}
-              className="w-full bg-white text-[#0f172a] font-black py-5 rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-slate-100 transition-all"
+              className="w-full bg-white text-[#0f172a] font-black py-5 rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-slate-50 transition-all"
             >
               產出精誠推薦解決方案 <ChevronRight size={22} className="text-blue-600" />
             </button>
           </div>
         )}
 
-        {/* Solution Phase */}
+        {/* 第三階段：解決方案 (截圖 4 白底卡片) */}
         {step === 'solution' && (
           <div className="animate-in zoom-in-95 duration-500 bg-white rounded-[2.5rem] shadow-2xl overflow-hidden text-slate-900 px-10 py-12">
             <div className="flex justify-between items-center mb-10 border-b-2 border-slate-50 pb-6">
-              <div>
-                <h2 className="text-3xl font-black text-[#1e3a8a] tracking-tight mb-2">精誠推薦解決方案</h2>
-                <div className="h-1.5 w-12 bg-blue-600 rounded-full"></div>
-              </div>
-              <div className="hidden sm:block bg-blue-50 text-blue-700 px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border border-blue-100">
-                SYSTEX Strategy
-              </div>
+                <div>
+                    <h2 className="text-3xl font-black text-[#1e3a8a] tracking-tight mb-2">精誠推薦解決方案</h2>
+                    <div className="h-1.5 w-12 bg-blue-600 rounded-full"></div>
+                </div>
             </div>
             
             <div className="space-y-6">
@@ -262,4 +245,6 @@ export default function App() {
       </div>
     </div>
   );
-}
+};
+
+export default App;
