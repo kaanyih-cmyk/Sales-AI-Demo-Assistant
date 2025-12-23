@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, ChevronRight, BarChart3, AlertCircle, CheckCircle2, Send, Loader2, Building2, Factory } from 'lucide-react';
 
 // --- 這裡是主要的 Demo 網頁程式碼 ---
@@ -12,53 +12,21 @@ const App = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [reportData, setReportData] = useState(null);
-  
-  // 使用 useRef 來記錄是否剛完成選取動作，避免重複觸發下拉選單
-  const isSelectionMade = useRef(false);
-
-  // 模擬公司資料庫 (包含名稱與產業)
-  const companyDb = [
-    { name: "寶雅", industry: "百貨零售業" },
-    { name: "寶島眼鏡", industry: "醫療器材零售業" },
-    { name: "寶成工業", industry: "鞋業製造業" },
-    { name: "寶齡爵諾", industry: "生技製藥業" },
-    { name: "寶元實業", industry: "土地開發與建築業" },
-    { name: "仁寶電腦", industry: "電腦及週邊設備業" }
-  ];
 
   // 模擬搜尋建議功能
   useEffect(() => {
-    // 如果剛選取完，則不執行搜尋建議
-    if (isSelectionMade.current) {
-      isSelectionMade.current = false;
-      return;
-    }
-
     const timer = setTimeout(() => {
       if (companyName.length >= 1 && step === 'input') {
-        const filtered = companyDb.filter(item => item.name.includes(companyName));
-        
-        // 如果輸入的內容完全等於其中一個選項，且目前沒顯示選單，就不再顯示（代表已選取）
-        if (filtered.length === 1 && filtered[0].name === companyName) {
-            setSuggestions([]);
-        } else {
-            setSuggestions(filtered);
-        }
+        const mockSuggestions = ["寶雅", "寶島眼鏡", "寶成工業", "寶齡爵諾", "寶元實業"].filter(s => s.includes(companyName));
+        setSuggestions(mockSuggestions);
       } else {
         setSuggestions([]);
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [companyName, step]);
-
-  const selectCompany = (item) => {
-    isSelectionMade.current = true;
-    setCompanyName(item.name);
-    setIndustry(item.industry); // 自動帶入產業資訊
-    setSuggestions([]);
-    setSelectedIndex(-1);
-  };
+  }, [companyName]);
 
   const handleKeyDown = (e) => {
     if (suggestions.length === 0) return;
@@ -69,15 +37,17 @@ const App = () => {
       e.preventDefault();
       setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev));
     } else if (e.key === 'Enter' && selectedIndex >= 0) {
-      selectCompany(suggestions[selectedIndex]);
+      setCompanyName(suggestions[selectedIndex]);
+      setSuggestions([]);
     }
   };
 
   const generateReport = () => {
     setLoading(true);
+    // 模擬 AI 生成時間
     setTimeout(() => {
       setReportData({
-        trends: "目前零售與科技產業正迎來 AI 驅動的轉型浪潮，企業紛紛投入 OMO (線上線下整合) 以及數據中台的建設。隨著生成式 AI 普及，如何利用數據精準預測消費行為並提供個性化服務，已成為維持競爭力的核心關鍵。",
+        trends: "目前零售產業正迎來 AI 驅動的轉型浪潮，企業紛紛投入 OMO (線上線下整合) 以及數據中台的建設。隨著生成式 AI 普及，如何利用數據精準預測消費行為並提供個性化服務，已成為維持競爭力的核心關鍵。",
         painPoints: "現有系統架構老舊，導致線上與實體店鋪的數據無法即時同步，造成會員體驗斷層。此外，行銷人員缺乏自動化工具來處理巨量數據，導致無法針對不同客群進行精準投遞，進而造成轉換率持續低迷。"
       });
       setStep('report');
@@ -104,35 +74,27 @@ const App = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div className="relative">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">公司名稱</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => {
-                      isSelectionMade.current = false; // 使用者手動輸入時，重置選取狀態
-                      setCompanyName(e.target.value);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    placeholder="搜尋公司，例如：寶"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-xl"
-                  />
-                  {suggestions.length > 0 && (
-                    <div className="absolute z-20 w-full bg-slate-800 border border-slate-700 mt-2 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1">
-                      {suggestions.map((item, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => selectCompany(item)}
-                          className={`px-6 py-4 cursor-pointer transition-colors ${selectedIndex === idx ? 'bg-blue-600 text-white' : 'hover:bg-slate-700 text-slate-300'}`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span>{item.name}</span>
-                            <span className="text-[10px] bg-slate-700 px-2 py-1 rounded text-slate-400 font-bold">{item.industry}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="搜尋公司，例如：寶"
+                  className="w-full bg-slate-800/50 border border-slate-700/50 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-xl"
+                />
+                {suggestions.length > 0 && (
+                  <div className="absolute z-20 w-full bg-slate-800 border border-slate-700 mt-2 rounded-2xl shadow-2xl overflow-hidden">
+                    {suggestions.map((item, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => { setCompanyName(item); setSuggestions([]); }}
+                        className={`px-6 py-4 cursor-pointer ${selectedIndex === idx ? 'bg-blue-600 text-white' : 'hover:bg-slate-700'}`}
+                      >
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -155,7 +117,7 @@ const App = () => {
                 placeholder="輸入更多細節..."
                 className="w-full bg-slate-800/50 border border-slate-700/50 rounded-2xl py-4 px-6 h-32 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none shadow-xl"
               />
-              <div className="text-right text-[10px] font-bold text-slate-600 mt-2 tracking-widest">{memo.length} / 50</div>
+              <div className="text-right text-[10px] font-bold text-slate-600 mt-2">{memo.length} / 50</div>
             </div>
 
             <button
@@ -178,9 +140,7 @@ const App = () => {
                 <h2 className="text-lg font-black text-white tracking-wider">產業趨勢</h2>
               </div>
               <div className="p-8">
-                <p className="text-slate-300 leading-relaxed text-lg font-medium">
-                  {reportData.trends}
-                </p>
+                <p className="text-slate-300 leading-relaxed text-lg">{reportData.trends}</p>
               </div>
             </div>
 
@@ -190,15 +150,13 @@ const App = () => {
                 <h2 className="text-lg font-black text-white tracking-wider">客戶痛點分析</h2>
               </div>
               <div className="p-8">
-                <p className="text-slate-300 leading-relaxed text-lg font-medium">
-                  {reportData.painPoints}
-                </p>
+                <p className="text-slate-300 leading-relaxed text-lg">{reportData.painPoints}</p>
               </div>
             </div>
 
             <button
               onClick={() => setStep('solution')}
-              className="w-full bg-white text-[#0f172a] font-black py-5 rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-slate-50 transition-all"
+              className="w-full bg-white text-[#0f172a] font-black py-5 rounded-2xl shadow-2xl flex items-center justify-center gap-3"
             >
               產出精誠推薦解決方案 <ChevronRight size={22} className="text-blue-600" />
             </button>
@@ -208,13 +166,7 @@ const App = () => {
         {/* 第三階段：解決方案 (截圖 4 白底卡片) */}
         {step === 'solution' && (
           <div className="animate-in zoom-in-95 duration-500 bg-white rounded-[2.5rem] shadow-2xl overflow-hidden text-slate-900 px-10 py-12">
-            <div className="flex justify-between items-center mb-10 border-b-2 border-slate-50 pb-6">
-                <div>
-                    <h2 className="text-3xl font-black text-[#1e3a8a] tracking-tight mb-2">精誠推薦解決方案</h2>
-                    <div className="h-1.5 w-12 bg-blue-600 rounded-full"></div>
-                </div>
-            </div>
-            
+            <h2 className="text-3xl font-black text-[#1e3a8a] mb-8 border-b-2 border-slate-50 pb-6">精誠推薦解決方案</h2>
             <div className="space-y-6">
               {[
                 { t: "全通路零售數據中台", d: "整合線上與線下數據，建立 360 度會員畫像。" },
@@ -222,23 +174,18 @@ const App = () => {
                 { t: "雲端安全防護架構", d: "提供端到端的資安監控，確保個資安全。" },
                 { t: "ESG 智慧能源管理", d: "透過物聯網監測門市能耗。" }
               ].map((item, i) => (
-                <div key={i} className="flex gap-6 p-6 bg-slate-50 rounded-2xl border border-transparent hover:border-blue-100 transition-all group">
-                  <div className="bg-blue-600 text-white p-2 rounded-xl self-start group-hover:rotate-12 transition-transform shadow-lg shadow-blue-200">
+                <div key={i} className="flex gap-6 p-6 bg-slate-50 rounded-2xl border border-transparent hover:border-blue-100 transition-all">
+                  <div className="bg-blue-600 text-white p-2 rounded-xl self-start">
                     <CheckCircle2 size={24} />
                   </div>
                   <div>
                     <h4 className="text-xl font-black text-slate-800">{item.t}</h4>
-                    <p className="text-slate-500 mt-2 font-medium">{item.d}</p>
+                    <p className="text-slate-500 mt-2">{item.d}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <button 
-              onClick={() => setStep('input')} 
-              className="mt-12 w-full text-slate-400 hover:text-blue-600 font-bold text-sm transition-colors tracking-widest uppercase"
-            >
-              ← 返回重新生成
-            </button>
+            <button onClick={() => setStep('input')} className="mt-12 w-full text-slate-400 font-bold text-sm">← 返回重新生成</button>
           </div>
         )}
 
